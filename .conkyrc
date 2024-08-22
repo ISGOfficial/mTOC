@@ -1,0 +1,73 @@
+# .conkyrc drives the HUD. It should be in the main directory and ensure you enable it using <sudo chmod +x .conkyrc>
+# Afterwards, ensure that it starts automatically 
+
+conky.config = {
+    update_interval = 1,
+    double_buffer = true,
+    background = true,
+    own_window = true,
+    own_window_type = 'desktop',
+    own_window_transparent = true,
+    own_window_argb_visual = true,
+    own_window_argb_value = 0,
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+    border_inner_margin = 0,
+    border_outer_margin = 0,
+    use_xft = true,
+    font = 'DejaVu Sans Mono:size=9',
+    alignment = 'top_left',
+    minimum_width = 200,
+    maximum_width = 400,
+    minimum_height =  500,
+    gap_x = 5,
+    gap_y = 5,
+};
+
+conky.text = [[
+# System Info Heading
+${font Arial:bold:size=10}${color orange}${alignc}System Information and Processes$color${font}
+${hr 1}
+${color orange}OS:${color red}Debian ${goto 70}${color orange}Unit:${color red}mTOC-G ${goto 160}${color orange}Uptime:${color red}$uptime
+${voffset -30}
+
+# Application Process Activies
+${if_match "${exec systemctl is-enabled syncthing}" == "enabled"}${if_match "${exec systemctl is-active syncthing}" == "active"}${color green}Syncthing${else}${color yellow}Syncthing${endif}${else}${color red}Syncthing${endif} ${goto 80}${if_match "${exec systemctl is-enabled gpsd}" == "enabled"}${if_match "${exec systemctl is-active gpsd}" == "active"}${color green}GPSD${else}${color yellow}GPSD${endif}${else}${color red}GPSD${endif} ${goto 120}${if_match "${exec systemctl is-enabled nginx}" == "enabled"}${if_match "${exec systemctl is-active nginx}" == "active"}${color green}NGINX${else}${color yellow}NGINX${endif}${else}${color red}NGINX${endif} ${goto 180}${if_match "${exec systemctl is-enabled docker}" == "enabled"}${if_match "${exec systemctl is-active docker}" == "active"}${color green}Docker${else}${color yellow}Docker${endif}${else}${color red}Docker${endif}
+${if_match "${exec systemctl is-enabled dump1090-fa}" == "enabled"}${if_match "${exec systemctl is-active dump1090-fa}" == "active"}${color green}dump1090-fa${else}${color yellow}dump1090-fa${endif}${else}${color red}
+dump1090-fa${endif}
+${voffset -30}
+
+# Battery Status
+${color orange}Battery Status: ${if_match "${execi 10 ~/scripts/battery_monitor.sh | awk '{print $2}'}" == "Charging"}${font DejaVu Sans Mono:bold:size=9}${color blue}Charging${else}${color red}Not Charging${endif}${font}${color}${goto 220}${if_match "${execi 10 ~/scripts/battery_monitor.sh | awk '{print $3}'}" == "Good"}${color green}Good${else}${color red}Low${endif}
+${voffset -30}
+
+# Environmental Heading
+${font Arial:bold:size=10}${color orange}${alignc}Environmental$color${font}
+${hr 1}
+${execpi 300 /home/mTOC-G/.conky/scripts/get_weather.sh}
+${voffset -43}
+
+# Terminal and Network Heading
+${font Arial:bold:size=10}${color orange}${alignc}Terminal and Network$color${font}
+${hr 1}
+${voffset -30}
+
+# CPU/Memory Usage with Conditional Coloring
+${color orange}CPU Usage:$color $cpu%
+${if_match $cpu<=75}${color green}${cpubar 4,250}${else}${if_match $cpu<=89}${color yellow}${cpubar 4,250}${else}${color red}${cpubar 4,250}${endif}${endif}
+${voffset -35}
+
+# Root Filesystem Usage with Conditional Coloring
+${color orange}Memory Usage:$color ${fs_used /}/${fs_size /} - ${fs_used_perc /}%
+${if_match ${fs_used_perc /}<=75}${color green}${fs_bar 6,250 /}${else}${if_match ${fs_used_perc /}<=89}${color yellow}${fs_bar 6,250 /}${else}${color red}${fs_bar 6,250 /}${endif}${endif}
+${voffset -30}
+
+# Network Usage - Inbound and Outbound Side by Side
+${alignc}${color orange}wlan0:$color ${addr wlan0}
+${alignc}${color orange}SSID:$color ${wireless_essid wlan0}
+${voffset -34}# Inbound Traffic Display
+${color orange}Inbound: ${goto 70}${color cyan}${downspeedf wlan0} kb/s${goto 150}${downspeedgraph wlan0 15,100 color grey}
+${voffset -28}
+
+# Outbound Traffic Display
+${color orange}Outbound: ${goto 70}${color cyan}${upspeedf wlan0} kb/s${goto 150}${upspeedgraph wlan0 15,100 color grey}
+]];
