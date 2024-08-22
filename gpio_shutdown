@@ -1,0 +1,54 @@
+# This script is routed to mTOC-G/scripts - adjust as necessary
+
+import RPi.GPIO as GPIO
+import time
+import os
+import logging
+
+# Configure logging
+logging.basicConfig(filename='/home/mTOC-G/shutdown.log', level=logging.DEBUG, format='%(asctime)s - %(message)s')
+
+# GPIO Setup
+GPIO.setmode(GPIO.BCM)
+pin = 3  # Adjust this based on your setup
+GPIO.setup(pin, GPIO.IN)  # No pull-up/down since there's a physical pull-up
+
+def shutdown():
+    logging.info("Initiating shutdown...")
+    os.system("sudo shutdown now -h")
+
+logging.info("Monitoring GPIO pin...")
+
+shutdown_initiated = False
+
+# Introduce a delay before starting to monitor the GPIO pin
+time.sleep(30)  # Delay for 30 seconds to allow system to fully boot
+
+try:
+    # Check initial state
+    initial_state = GPIO.input(pin)
+    logging.debug(f"Initial GPIO pin state: {initial_state}")
+    if initial_state == 1:
+        shutdown_initiated = True
+
+    while True:
+        current_state = GPIO.input(pin)
+        logging.debug(f"GPIO pin state: {current_state}")
+
+        # Check if switch is in 'on' position (GPIO state 1) and shutdown not initiated
+        if current_state == 1 and not shutdown_initiated:
+            logging.info("Switch turned on. Initiating shutdown.")
+            shutdown()
+            shutdown_initiated = True  # Prevent further shutdown calls
+
+        # Reset shutdown flag if switch is turned back 'off' (GPIO state 0)
+        elif current_state == 0:
+            logging.info("Switch turned off. Resetting shutdown flag.")
+            shutdown_initiated = False
+
+        time.sleep(1)  # Use the same polling delay as in switch_monitor.py
+except KeyboardInterrupt:
+    logging.info("Script terminated by user")
+finally:
+    GPIO.cleanup()
+    logging.info("GPIO cleanup done")
